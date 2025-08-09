@@ -10,6 +10,8 @@ interface AIMessage {
   content: string;
 }
 
+// starting to think this file is not being used anywhere, is this a useless file?
+
 export class AIRecommendationService {
   constructor(private apiKey: string) {}
 
@@ -23,12 +25,17 @@ export class AIRecommendationService {
           temperature: 0.7,
           max_tokens: 1000,
 
-          // 🔒 FREE-ONLY: if the free endpoint is busy, this will error instead of falling back.
+          // Strict configuration to use only the specified model
           provider: {
-            allow_fallbacks: false,
+            allow_fallbacks: false, // Disable fallbacks completely
+            require_parameters: true,
+            require_consent: true,
+            // Force the exact model we want
+            model: OPENROUTER_MODEL,
+            // Explicitly reject any fallback models
+            reject_models: ["*"],
+            // Set price limits to 0 to prevent any paid model usage
             max_price: { prompt: 0, completion: 0, request: 0 },
-            // If you know the exact free provider name from the Models page, uncomment:
-            // only: ["OpenRouter"] // or whatever exact provider label shows as free
           },
         },
         {
@@ -43,18 +50,23 @@ export class AIRecommendationService {
         }
       );
 
-      // ✅ Double-check what OpenRouter actually used
-      const routed =
-        (response.headers &&
-          (response.headers["openrouter-model"] as string)) ||
-        (response.data && (response.data.model as string)) ||
-        (response.data?.choices?.[0]?.model as string) ||
-        "";
+      // Double-check what OpenRouter actually used
+      // Get the actual model used from the response
+      const routedModel =
+        response.headers?.["x-openrouter-model"] ||
+        response.headers?.["openrouter-model"] ||
+        response.data?.model ||
+        response.data?.choices?.[0]?.model ||
+        "unknown";
 
-      if (routed && routed !== OPENROUTER_MODEL) {
-        // Hard fail if anything except the free DeepSeek endpoint was used.
+      console.log("Requested model:", OPENROUTER_MODEL);
+      console.log("Actual model used:", routedModel);
+      console.log("Full response headers:", response.headers);
+
+      if (routedModel !== OPENROUTER_MODEL) {
         throw new Error(
-          `Blocked: routed to unexpected model "${routed}". Expected "${OPENROUTER_MODEL}".`
+          `Blocked: Routed to model "${routedModel}" but expected "${OPENROUTER_MODEL}". ` +
+            "Please check if the model name is correct and available."
         );
       }
 
@@ -84,7 +96,15 @@ export class AIRecommendationService {
   }
 }
 
-// IMPORTANT: Prefer passing the key from server-side env, not exposing it to the browser.
+// Check for the environment variable with Vite's required VITE_ prefix
+const openRouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+
+if (!openRouterApiKey) {
+  console.warn(
+    "No VITE_OPENROUTER_API_KEY environment variable set. Please set it in your .env file and in your Vercel project settings."
+  );
+}
+
 export const aiRecommendationService = new AIRecommendationService(
-  process.env.OPENROUTER_API_KEY || ""
+  openRouterApiKey || ""
 );
