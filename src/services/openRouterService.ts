@@ -27,8 +27,8 @@ export class OpenRouterService {
         {
           model: this.model,
           messages,
-          temperature: 0.7,
-          max_tokens: 1000,
+          temperature: 0.5,
+          max_tokens: 500,
         },
         {
           headers: {
