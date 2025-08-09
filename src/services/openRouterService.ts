@@ -34,7 +34,7 @@ export class OpenRouterService {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${this.apiKey}`,
-            "HTTP-Referer": "https://github.com/yourusername/cine-sage",
+            "HTTP-Referer": "https://github.com/deborah-sylvia/cine-sage",
             "X-Title": "CineSage",
           },
         }
