@@ -187,7 +187,7 @@ function App() {
             </div>
 
             {/* JSON Export */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            {/* <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <span className="bg-green-500 w-3 h-3 rounded-full mr-2"></span>
                 JSON Output for Developers
@@ -195,7 +195,7 @@ function App() {
               <pre className="bg-gray-900 p-4 rounded-lg overflow-x-auto text-sm text-gray-300 border border-gray-600">
                 {JSON.stringify(analysis, null, 2)}
               </pre>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
