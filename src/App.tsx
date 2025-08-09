@@ -169,7 +169,10 @@ function App() {
             </div>
 
             {/* Taste Profile */}
-            <TasteProfile profile={analysis.taste_profile} />
+            <TasteProfile 
+              tasteProfile={analysis.taste_profile}
+              recommendations={analysis.recommendations}
+            />
 
             {/* Recommendations */}
             <div>
