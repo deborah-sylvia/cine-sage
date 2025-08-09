@@ -5,6 +5,7 @@ import { MovieAnalyzer } from "./utils/movieAnalyzer";
 import { MovieSearch } from "./components/MovieSearch";
 import { TasteProfile } from "./components/TasteProfile";
 import { RecommendationCard } from "./components/RecommendationCard";
+import { FeedbackButton } from "./components/FeedbackButton";
 
 function App() {
   const [selectedMovies, setSelectedMovies] = useState<Movie[]>([]);
@@ -199,6 +200,7 @@ function App() {
           </div>
         )}
       </div>
+      <FeedbackButton />
     </div>
   );
 }

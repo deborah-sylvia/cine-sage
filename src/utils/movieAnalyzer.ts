@@ -1,5 +1,6 @@
 import { Movie, Recommendation, AnalysisResult } from '../types/movie';
 import { tmdbService, TMDBContent } from '../services/tmdbApi';
+import { openRouterService } from '../services/openRouterService';
 
 export class MovieAnalyzer {
   private analyzeGenrePreferences(movies: Movie[]): string[] {
@@ -102,11 +103,32 @@ export class MovieAnalyzer {
 
   public async analyzeMovies(selectedMovies: Movie[]): Promise<AnalysisResult> {
     const tasteProfile = this.generateTasteProfile(selectedMovies);
-    const recommendations = await this.selectRecommendations(selectedMovies);
+    
+    // Get both traditional and AI recommendations
+    const [traditionalRecs, aiInsights] = await Promise.all([
+      this.selectRecommendations(selectedMovies),
+      this.getAIInsights(selectedMovies)
+    ]);
+
+    // Combine traditional recommendations with AI insights
+    const enhancedProfile = `${tasteProfile}\n\n${aiInsights}`;
 
     return {
-      taste_profile: tasteProfile,
-      recommendations,
+      taste_profile: enhancedProfile,
+      recommendations: traditionalRecs,
     };
+  }
+
+  private async getAIInsights(selectedMovies: Movie[]): Promise<string> {
+    try {
+      if (selectedMovies.length === 0) return '';
+      
+      // Get AI-powered insights and recommendations from OpenRouter
+      const aiResponse = await openRouterService.generatePersonalizedRecommendations(selectedMovies);
+      return `\n**AI-Powered Insights**\n\n${aiResponse}`;
+    } catch (error) {
+      console.error('Error getting AI insights:', error);
+      return '\n*AI insights are currently unavailable. Showing standard recommendations.*';
+    }
   }
 }
