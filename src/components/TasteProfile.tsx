@@ -108,32 +108,53 @@ const parseAIRecommendations = (text: string): AIRecommendation[] => {
 const formatText = (text: string): React.ReactNode => {
   if (!text) return null;
   
+  // Remove markdown headers (###, ##, #) at the start of lines
+  const cleanText = text.replace(/^#+\s*/gm, '');
+  
   // Split by double newlines to handle paragraphs
-  return text.split('\n\n').map((paragraph, i) => {
-    // Simple bold text handling
-    const parts: (string | JSX.Element)[] = [];
-    const boldRegex = /\*\*(.*?)\*\*/g;
-    let lastIndex = 0;
-    let match;
+  return cleanText.split('\n\n').map((paragraph, i) => {
+    // Skip empty paragraphs
+    if (!paragraph.trim()) return null;
     
-    while ((match = boldRegex.exec(paragraph)) !== null) {
-      // Add text before the match
-      if (match.index > lastIndex) {
-        parts.push(paragraph.substring(lastIndex, match.index));
+    // Process bold text
+    const parts: (string | JSX.Element)[] = [];
+    let remaining = paragraph;
+    let key = 0;
+    
+    while (remaining) {
+      const boldStart = remaining.indexOf('**');
+      
+      if (boldStart === -1) {
+        // No more bold markers, add remaining text
+        if (remaining) parts.push(remaining);
+        break;
+      }
+      
+      // Add text before the bold section
+      if (boldStart > 0) {
+        parts.push(remaining.substring(0, boldStart));
+      }
+      
+      // Find the end of the bold section
+      const afterBoldStart = remaining.substring(boldStart + 2);
+      const boldEnd = afterBoldStart.indexOf('**');
+      
+      if (boldEnd === -1) {
+        // No closing **, treat as regular text
+        parts.push('**' + afterBoldStart);
+        break;
       }
       
       // Add the bold text
-      parts.push(<strong key={`bold-${i}-${match.index}`}>{match[1]}</strong>);
-      lastIndex = match.index + match[0].length;
-    }
-    
-    // Add remaining text
-    if (lastIndex < paragraph.length) {
-      parts.push(paragraph.substring(lastIndex));
+      const boldText = afterBoldStart.substring(0, boldEnd);
+      parts.push(<strong key={`bold-${i}-${key++}`}>{boldText}</strong>);
+      
+      // Continue with the rest of the text
+      remaining = afterBoldStart.substring(boldEnd + 2);
     }
     
     return (
-      <p key={i} className="mb-4">
+      <p key={i} className="mb-4 text-gray-200">
         {parts}
       </p>
     );
