@@ -104,7 +104,7 @@ function App() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 pb-12 py-4 my-4">
+      <div className="container mx-auto px-4 pb-12 py-4 mt-4">
         {!analysis ? (
           <div className="space-y-8">
             {/* Selection Phase */}
@@ -169,7 +169,7 @@ function App() {
             </div>
 
             {/* Taste Profile */}
-            <TasteProfile 
+            <TasteProfile
               tasteProfile={analysis.taste_profile}
               recommendations={analysis.recommendations}
             />
