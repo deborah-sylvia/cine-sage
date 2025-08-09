@@ -48,9 +48,19 @@ function App() {
         <div className="relative container mx-auto px-4 py-12">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
-              <div className="p-1 rounded-full bg-gradient-to-r from-orange-400 via-yellow-400 to-blue-400" style={{ transform: 'rotate(45deg)' }}>
-                <div className="bg-gray-900 rounded-full p-2" style={{ transform: 'rotate(-45deg)' }}>
-                  <img src="/logo.png" alt="Cine-Sage Logo" className="w-12 h-12" />
+              <div
+                className="p-1 rounded-full bg-gradient-to-r from-orange-400 via-yellow-400 to-blue-400"
+                style={{ transform: "rotate(45deg)" }}
+              >
+                <div
+                  className="bg-gray-900 rounded-full p-2"
+                  style={{ transform: "rotate(-45deg)" }}
+                >
+                  <img
+                    src="/logo.png"
+                    alt="Cine-Sage Logo"
+                    className="w-12 h-12"
+                  />
                 </div>
               </div>
             </div>
@@ -79,7 +89,13 @@ function App() {
                   >
                     <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.07 1 5.07 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
                   </svg>
-                  @deborah-sylvia
+                  <a
+                    href="https://github.com/deborah-sylvia"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    @deborah-sylvia
+                  </a>
                 </span>
               </span>
             </div>
