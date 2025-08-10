@@ -118,7 +118,28 @@ class TMDBService {
 
   async getRecommendations(mediaType: 'movie' | 'tv', id: number): Promise<TMDBSearchResponse> {
     try {
-      const response = await this.api.get(`/${mediaType}/${id}/recommendations`);
+      const response = await this.api.get(`/${mediaType}/${id}/recommendations`, {
+        params: {
+          language: 'en-US',
+          page: 1,
+          sort_by: 'vote_average.desc',
+          vote_count_gte: 10,
+        },
+      });
+      
+      // Debug log to inspect the response
+      console.log('TMDB Recommendations Response:', {
+        url: `/${mediaType}/${id}/recommendations`,
+        params: response.config.params,
+        results: response.data.results.map((r: any) => ({
+          id: r.id,
+          title: r.title || r.name,
+          vote_average: r.vote_average,
+          vote_count: r.vote_count,
+          release_date: r.release_date || r.first_air_date
+        }))
+      });
+      
       return response.data;
     } catch (error) {
       console.error(`Failed to get recommendations for ${mediaType} ${id}:`, error);

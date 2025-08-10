@@ -28,7 +28,7 @@ export class OpenRouterService {
           model: this.model,
           messages,
           temperature: 0.5,
-          max_tokens: 1500,
+          max_tokens: 10000,
         },
         {
           headers: {
@@ -55,7 +55,7 @@ export class OpenRouterService {
 
     const systemPrompt = `You are a movie recommendation expert. Analyze the user's movie preferences and provide personalized recommendations.`;
 
-    const userPrompt = `Based on these movies I like, please provide 5 personalized movie recommendations with a short explanation for each:
+    const userPrompt = `Based on these movies I like, please provide 10 personalized movie recommendations with a short explanation for each:
 
 ${movieList}
 

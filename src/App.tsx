@@ -172,6 +172,7 @@ function App() {
             <TasteProfile
               tasteProfile={analysis.taste_profile}
               recommendations={analysis.recommendations}
+              selectedMovies={selectedMovies}
             />
 
             {/* Recommendations */}
