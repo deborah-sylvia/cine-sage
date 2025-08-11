@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, X, Loader2, TrendingUp, Star, Tv, Film } from 'lucide-react';
+import { Search, X, Loader2, TrendingUp, Star } from 'lucide-react';
 import { Movie } from '../types/movie';
 import { tmdbService, TMDBContent } from '../services/tmdbApi';
 import { MovieCard } from './MovieCard';
@@ -9,7 +9,6 @@ interface MovieSearchProps {
   onMovieToggle: (movie: Movie) => void;
 }
 
-type MediaType = 'movie' | 'tv';
 type ViewType = 'popular' | 'trending' | 'search';
 
 export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovieToggle }) => {
@@ -17,7 +16,6 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
   const [content, setContent] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentView, setCurrentView] = useState<ViewType>('popular');
-  const [mediaType, setMediaType] = useState<MediaType>('movie');
   const [hasSearched, setHasSearched] = useState(false);
 
   // Convert TMDB content to our Movie interface
@@ -52,29 +50,43 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
       setLoading(false);
     };
     initialize();
-  }, [mediaType]);
+  }, []);
 
   const loadPopularContent = async () => {
     try {
-      const response = await tmdbService.getPopularMovies(1, mediaType);
-      const convertedContent = response.results.map(convertTMDBContent);
-      setContent(convertedContent);
+      // Load both movies and TV shows
+      const [moviesResponse, tvResponse] = await Promise.all([
+        tmdbService.getPopularMovies(1, 'movie'),
+        tmdbService.getPopularMovies(1, 'tv')
+      ]);
+      
+      // Combine and sort by popularity
+      const combined = [
+        ...moviesResponse.results.map(convertTMDBContent),
+        ...tvResponse.results.map(convertTMDBContent)
+      ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      
+      setContent(combined);
       setCurrentView('popular');
     } catch (error) {
-      console.error(`Failed to load popular ${mediaType}:`, error);
+      console.error('Failed to load popular content:', error);
     }
   };
 
   const loadTrendingContent = async () => {
     try {
-      const response = await tmdbService.getTrendingContent('week', mediaType === 'movie' ? 'movie' : 'tv');
+      // Get both trending movies and TV shows
+      const response = await tmdbService.getTrendingContent('week', 'all');
+      
+      // Convert and sort by popularity
       const convertedContent = response.results
-        .filter((item: TMDBContent) => 'media_type' in item && item.media_type === mediaType)
-        .map(convertTMDBContent);
+        .map(convertTMDBContent)
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        
       setContent(convertedContent);
       setCurrentView('trending');
     } catch (error) {
-      console.error(`Failed to load trending ${mediaType}:`, error);
+      console.error('Failed to load trending content:', error);
     }
   };
 
@@ -88,8 +100,15 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
     setLoading(true);
     setHasSearched(true);
     try {
-      const response = await tmdbService.searchMovies(query, 1, mediaType);
-      const convertedContent = response.results.map(convertTMDBContent);
+      // Search across both movies and TV shows
+      const response = await tmdbService.searchMovies(query, 1, 'multi');
+      
+      // Convert and sort by popularity
+      const convertedContent = response.results
+        .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
+        .map(convertTMDBContent)
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        
       setContent(convertedContent);
       setCurrentView('search');
     } catch (error) {
@@ -122,13 +141,7 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
     setHasSearched(false);
   };
 
-  const toggleMediaType = (type: MediaType) => {
-    if (type !== mediaType) {
-      setMediaType(type);
-      setSearchTerm('');
-      setHasSearched(false);
-    }
-  };
+
 
   const isSelected = (content: Movie) => selectedMovies.some(m => m.id === content.id);
 
@@ -140,30 +153,13 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <div className="flex mb-4 border-b border-gray-700">
-          <button
-            onClick={() => toggleMediaType('movie')}
-            className={`flex items-center px-4 py-2 ${mediaType === 'movie' ? 'text-white border-b-2 border-purple-500' : 'text-gray-400'} font-medium`}
-          >
-            <Film size={16} className="mr-2" />
-            Movies
-          </button>
-          <button
-            onClick={() => toggleMediaType('tv')}
-            className={`flex items-center px-4 py-2 ${mediaType === 'tv' ? 'text-white border-b-2 border-purple-500' : 'text-gray-400'} font-medium`}
-          >
-            <Tv size={16} className="mr-2" />
-            TV Shows
-          </button>
-        </div>
-        
+      <div className="mb-6">        
         <form onSubmit={handleSearch} className="relative">
           <input
             type="text"
             value={searchTerm}
             onChange={handleInputChange}
-            placeholder={`Search for ${mediaType === 'movie' ? 'movies' : 'TV shows'}...`}
+            placeholder="Search for movies and TV shows..."
             className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg pr-12 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
           {searchTerm ? (
@@ -194,7 +190,7 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
             }`}
           >
             <Star size={16} className="mr-2" />
-            Popular {mediaType === 'movie' ? 'Movies' : 'TV Shows'}
+            Popular Now
           </button>
           <button
             onClick={loadTrendingContent}
@@ -205,7 +201,7 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
             }`}
           >
             <TrendingUp size={16} className="mr-2" />
-            Trending {mediaType === 'movie' ? 'Movies' : 'TV Shows'}
+            Trending This Week
           </button>
         </div>
       )}
@@ -238,32 +234,31 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
             {hasSearched && searchTerm 
               ? `Search Results for "${searchTerm}"` 
               : currentView === 'trending' 
-                ? `Trending ${mediaType === 'movie' ? 'Movies' : 'TV Shows'}`
-                : `Popular ${mediaType === 'movie' ? 'Movies' : 'TV Shows'}`}
+                ? `Trending This Week`
+                : `Popular Now`}
           </h3>
           <span className="text-sm text-gray-400">
-            {content.length} {mediaType === 'movie' ? 'movie' : 'TV show'}{content.length !== 1 ? 's' : ''}
+            {content.length} {content.length !== 1 ? 'items' : 'item'}
           </span>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-            <span className="ml-3 text-gray-400">Loading {mediaType === 'movie' ? 'movies' : 'TV shows'}...</span>
+            <span className="ml-3 text-gray-400">Loading...</span>
           </div>
         ) : displayedContent.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-400 mb-2">
-              {hasSearched 
-                ? `No ${mediaType === 'movie' ? 'movies' : 'TV shows'} found`
-                : `Failed to load ${mediaType === 'movie' ? 'movies' : 'TV shows'}`}
-            </div>
+            <p className="text-gray-400 text-center py-8">
+              {loading ? 'Searching...' : 'No content found.'}
+            </p>
             {hasSearched && (
               <button
                 onClick={clearSearch}
                 className="text-purple-400 hover:text-purple-300 underline"
               >
-                View popular {mediaType === 'movie' ? 'movies' : 'TV shows'} instead
+                View popular content instead
+                View popular content instead
               </button>
             )}
           </div>
