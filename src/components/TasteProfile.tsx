@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Sparkles, ChevronDown, ChevronUp, Film } from "lucide-react";
+import {
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Film,
+  BarChart2,
+} from "lucide-react";
 import { AIRecommendation } from "../types/aiRecommendation";
 import { RecommendationTabs } from "./RecommendationTabs";
 import { Recommendation, Movie } from "../types/movie";
@@ -175,11 +181,12 @@ export const TasteProfile: React.FC<TasteProfileProps> = ({
   recommendations,
   selectedMovies,
 }) => {
-  const [showSelectedMovies, setShowSelectedMovies] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<
     AIRecommendation[]
   >([]);
   const [tmdbMovies, setTmdbMovies] = useState<Movie[]>([]);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [showSelectedMovies, setShowSelectedMovies] = useState(false);
 
   useEffect(() => {
     // Parse AI recommendations from the taste profile text
@@ -248,27 +255,33 @@ export const TasteProfile: React.FC<TasteProfileProps> = ({
   }, [tasteProfile, recommendations]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Selected Movies Dropdown */}
       {selectedMovies.length > 0 && (
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700">
+        <div className="bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden transition-all duration-300 hover:border-purple-500/50">
           <button
             onClick={() => setShowSelectedMovies(!showSelectedMovies)}
-            className="flex items-center justify-between w-full text-left"
+            className="w-full px-6 py-4 text-left transition-colors duration-200 hover:bg-gray-700/50 flex items-center justify-between"
           >
-            <h2 className="text-xl font-bold text-white flex items-center">
-              <Film className="w-5 h-5 mr-3 text-purple-400" />
+            <h2 className="text-lg font-semibold text-white flex items-center">
+              <BarChart2 className="w-5 h-5 mr-3 text-purple-400" />
               Your Selected Movies ({selectedMovies.length})
             </h2>
-            {showSelectedMovies ? (
-              <ChevronUp className="w-5 h-5 text-gray-400" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            )}
+            <ChevronDown
+              className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                showSelectedMovies ? "transform rotate-180" : ""
+              }`}
+            />
           </button>
 
-          {showSelectedMovies && (
-            <div className="mt-4">
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              showSelectedMovies
+                ? "max-h-[2000px] opacity-100"
+                : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="p-6 pt-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {selectedMovies.map((movie) => (
                   <div
@@ -284,34 +297,48 @@ export const TasteProfile: React.FC<TasteProfileProps> = ({
                 ))}
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
       {/* Taste Profile */}
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700">
-        <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
-          <Sparkles className="w-6 h-6 mr-3 text-amber-400" />
-          Your Taste Profile
-        </h2>
+      <div className="bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden transition-all duration-300 hover:border-purple-500/50">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-6 py-4 text-left transition-colors duration-200 hover:bg-gray-700/50 flex items-center justify-between"
+          aria-expanded={isExpanded}
+        >
+          <h2 className="text-lg font-semibold text-white flex items-center">
+            <BarChart2 className="w-5 h-5 mr-3 text-amber-400" />
+            Your Taste Profile
+          </h2>
+          <ChevronDown
+            className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+              isExpanded ? "transform rotate-180" : ""
+            }`}
+            aria-hidden="true"
+          />
+        </button>
 
-        <div className="text-gray-200">{formatText(tasteProfile)}</div>
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+          }`}
+          role="region"
+          aria-labelledby="taste-profile-heading"
+        >
+          <div className="px-6 pb-6 pt-3 text-gray-200">
+            {formatText(tasteProfile)}
+          </div>
+        </div>
       </div>
 
-      {/* Recommendations Section */}
-      <div className="mt-8">
-        <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
-          <Sparkles className="w-6 h-6 mr-2 text-amber-400" />
-          Recommended For You
-        </h3>
-
-        {/* Tabbed Recommendations */}
-        <RecommendationTabs
-          tmdbRecommendations={tmdbMovies}
-          aiRecommendations={aiRecommendations}
-          loading={false}
-        />
-      </div>
+      {/* Tabbed Recommendations */}
+      <RecommendationTabs
+        tmdbRecommendations={tmdbMovies}
+        aiRecommendations={aiRecommendations}
+        loading={false}
+      />
     </div>
   );
 };
