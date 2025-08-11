@@ -47,7 +47,7 @@ function App() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative container mx-auto px-4 py-12">
-          <div className="text-center mb-12">
+          <div className="text-center">
             <div className="flex items-center justify-center mb-6">
               <div
                 className="p-1 rounded-full bg-gradient-to-r from-orange-400 via-yellow-400 to-blue-400"

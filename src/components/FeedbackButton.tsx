@@ -7,11 +7,11 @@ export const FeedbackButton: React.FC = () => {
       href="https://tally.so/r/nGE4e2"
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 transform hover:scale-110 flex items-center z-50"
+      className="fixed bottom-6 right-6 bg-purple-600/90 hover:bg-purple-500/90 text-white rounded-xl px-5 py-3 shadow-lg backdrop-blur-sm transition-all duration-300 flex items-center z-50 border border-purple-400/20 hover:border-purple-300/40"
       aria-label="Provide feedback"
     >
-      <MessageCircle className="w-6 h-6" />
-      <span className="ml-2 font-medium">Feedback</span>
+      <MessageCircle className="w-5 h-5" />
+      <span className="ml-2 font-medium text-sm">Feedback</span>
     </a>
   );
 };
