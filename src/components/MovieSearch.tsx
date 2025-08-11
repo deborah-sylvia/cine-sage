@@ -1,43 +1,54 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Search, X, Loader2, TrendingUp, Star } from 'lucide-react';
-import { Movie } from '../types/movie';
-import { tmdbService, TMDBContent } from '../services/tmdbApi';
-import { MovieCard } from './MovieCard';
+import React, { useState, useMemo, useEffect } from "react";
+import { Search, X, Loader2, TrendingUp, Star } from "lucide-react";
+import { Movie } from "../types/movie";
+import { tmdbService, TMDBContent } from "../services/tmdbApi";
+import { MovieCard } from "./MovieCard";
 
 interface MovieSearchProps {
   selectedMovies: Movie[];
   onMovieToggle: (movie: Movie) => void;
 }
 
-type ViewType = 'popular' | 'trending' | 'search';
+type ViewType = "popular" | "trending" | "search";
 
-export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovieToggle }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+export const MovieSearch: React.FC<MovieSearchProps> = ({
+  selectedMovies,
+  onMovieToggle,
+}) => {
+  const [searchTerm, setSearchTerm] = useState("");
   const [content, setContent] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentView, setCurrentView] = useState<ViewType>('popular');
+  const [currentView, setCurrentView] = useState<ViewType>("popular");
   const [hasSearched, setHasSearched] = useState(false);
 
   // Convert TMDB content to our Movie interface
   const convertTMDBContent = (tmdbContent: TMDBContent): Movie => {
-    const isTV = 'name' in tmdbContent;
-    
+    const isTV = "name" in tmdbContent;
+
     return {
       id: tmdbContent.id,
       title: isTV ? tmdbContent.name : tmdbContent.title,
-      year: (isTV ? tmdbContent.first_air_date : tmdbContent.release_date) 
-        ? new Date((isTV ? tmdbContent.first_air_date : tmdbContent.release_date) as string).getFullYear() 
+      year: (isTV ? tmdbContent.first_air_date : tmdbContent.release_date)
+        ? new Date(
+            (isTV
+              ? tmdbContent.first_air_date
+              : tmdbContent.release_date) as string
+          ).getFullYear()
         : 0,
-      genre: tmdbContent.genre_ids && tmdbContent.genre_ids.length > 0 
-        ? tmdbService.getGenreName(tmdbContent.genre_ids[0], isTV ? 'tv' : 'movie')
-        : 'Unknown',
+      genre:
+        tmdbContent.genre_ids && tmdbContent.genre_ids.length > 0
+          ? tmdbService.getGenreName(
+              tmdbContent.genre_ids[0],
+              isTV ? "tv" : "movie"
+            )
+          : "Unknown",
       tmdb_id: tmdbContent.id,
       poster_path: tmdbContent.poster_path,
       overview: tmdbContent.overview,
       vote_average: tmdbContent.vote_average,
       popularity: tmdbContent.popularity,
       genre_ids: tmdbContent.genre_ids,
-      media_type: isTV ? 'tv' : 'movie',
+      media_type: isTV ? "tv" : "movie",
     };
   };
 
@@ -56,37 +67,41 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
     try {
       // Load both movies and TV shows
       const [moviesResponse, tvResponse] = await Promise.all([
-        tmdbService.getPopularMovies(1, 'movie'),
-        tmdbService.getPopularMovies(1, 'tv')
+        tmdbService.getPopularMovies(1, "movie"),
+        tmdbService.getPopularMovies(1, "tv"),
       ]);
-      
+
       // Combine and sort by popularity
       const combined = [
         ...moviesResponse.results.map(convertTMDBContent),
-        ...tvResponse.results.map(convertTMDBContent)
+        ...tvResponse.results.map(convertTMDBContent),
       ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-      
+
       setContent(combined);
-      setCurrentView('popular');
+      setCurrentView("popular");
     } catch (error) {
-      console.error('Failed to load popular content:', error);
+      console.error("Failed to load popular content:", error);
     }
   };
 
   const loadTrendingContent = async () => {
     try {
       // Get both trending movies and TV shows
-      const response = await tmdbService.getTrendingContent('week', 'all');
-      
-      // Convert and sort by popularity
+      const response = await tmdbService.getTrendingContent("week", "all");
+
       const convertedContent = response.results
+        .filter(
+          (item: any) =>
+            (item as any).media_type === "movie" ||
+            (item as any).media_type === "tv"
+        )
         .map(convertTMDBContent)
         .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-        
+
       setContent(convertedContent);
-      setCurrentView('trending');
+      setCurrentView("trending");
     } catch (error) {
-      console.error('Failed to load trending content:', error);
+      console.error("Failed to load trending content:", error);
     }
   };
 
@@ -101,18 +116,20 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
     setHasSearched(true);
     try {
       // Search across both movies and TV shows
-      const response = await tmdbService.searchMovies(query, 1, 'multi');
-      
+      const response = await tmdbService.searchMovies(query, 1, "multi");
+
       // Convert and sort by popularity
       const convertedContent = response.results
-        .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
+        .filter(
+          (item: any) => item.media_type === "movie" || item.media_type === "tv"
+        )
         .map(convertTMDBContent)
         .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-        
+
       setContent(convertedContent);
-      setCurrentView('search');
+      setCurrentView("search");
     } catch (error) {
-      console.error('Search failed:', error);
+      console.error("Search failed:", error);
     }
     setLoading(false);
   };
@@ -130,30 +147,29 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
     e.preventDefault();
     searchContent(searchTerm);
   };
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
   const clearSearch = () => {
-    setSearchTerm('');
+    setSearchTerm("");
     loadPopularContent();
     setHasSearched(false);
   };
 
-
-
-  const isSelected = (content: Movie) => selectedMovies.some(m => m.id === content.id);
+  const isSelected = (content: Movie) =>
+    selectedMovies.some((m) => m.id === content.id);
 
   const displayedContent = useMemo(() => {
-    return content.filter(item => 
+    return content.filter((item) =>
       item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [content, searchTerm]);
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">        
+      <div className="mb-6">
         <form onSubmit={handleSearch} className="relative">
           <input
             type="text"
@@ -184,9 +200,9 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
           <button
             onClick={loadPopularContent}
             className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              currentView === 'popular'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              currentView === "popular"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
             <Star size={16} className="mr-2" />
@@ -195,9 +211,9 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
           <button
             onClick={loadTrendingContent}
             className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              currentView === 'trending'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              currentView === "trending"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
             <TrendingUp size={16} className="mr-2" />
@@ -213,7 +229,7 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
             Selected Movies ({selectedMovies.length})
           </h3>
           <div className="flex flex-wrap gap-2">
-            {selectedMovies.map(movie => (
+            {selectedMovies.map((movie) => (
               <span
                 key={movie.id}
                 className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm flex items-center cursor-pointer hover:bg-purple-700 transition-colors"
@@ -231,14 +247,14 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">
-            {hasSearched && searchTerm 
-              ? `Search Results for "${searchTerm}"` 
-              : currentView === 'trending' 
-                ? `Trending This Week`
-                : `Popular Now`}
+            {hasSearched && searchTerm
+              ? `Search Results for "${searchTerm}"`
+              : currentView === "trending"
+              ? `Trending This Week`
+              : `Popular Now`}
           </h3>
           <span className="text-sm text-gray-400">
-            {content.length} {content.length !== 1 ? 'items' : 'item'}
+            {content.length} {content.length !== 1 ? "items" : "item"}
           </span>
         </div>
 
@@ -250,15 +266,14 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
         ) : displayedContent.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-400 text-center py-8">
-              {loading ? 'Searching...' : 'No content found.'}
+              {loading ? "Searching..." : "No content found."}
             </p>
             {hasSearched && (
               <button
                 onClick={clearSearch}
                 className="text-purple-400 hover:text-purple-300 underline"
               >
-                View popular content instead
-                View popular content instead
+                View popular content instead View popular content instead
               </button>
             )}
           </div>
@@ -266,7 +281,7 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({ selectedMovies, onMovi
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayedContent.map((item) => (
               <MovieCard
-                key={`${item.media_type || 'movie'}-${item.id}`}
+                key={`${item.media_type || "movie"}-${item.id}`}
                 movie={item}
                 isSelected={isSelected(item)}
                 onToggle={onMovieToggle}

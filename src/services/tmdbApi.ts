@@ -1,8 +1,10 @@
-import axios from 'axios';
+import axios from "axios";
 
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || 'demo_key';
-const TMDB_BASE_URL = import.meta.env.VITE_TMDB_BASE_URL || 'https://api.themoviedb.org/3';
-const TMDB_IMAGE_BASE_URL = import.meta.env.VITE_TMDB_IMAGE_BASE_URL || 'https://image.tmdb.org/t/p/w500';
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || "demo_key";
+const TMDB_BASE_URL =
+  import.meta.env.VITE_TMDB_BASE_URL || "https://api.themoviedb.org/3";
+const TMDB_IMAGE_BASE_URL =
+  import.meta.env.VITE_TMDB_IMAGE_BASE_URL || "https://image.tmdb.org/t/p/w500";
 
 export interface TMDBMovie {
   id: number;
@@ -13,7 +15,7 @@ export interface TMDBMovie {
   genre_ids: number[];
   vote_average: number;
   popularity: number;
-  media_type?: 'movie';
+  media_type?: "movie";
 }
 
 export interface TMDBSeries {
@@ -25,7 +27,7 @@ export interface TMDBSeries {
   genre_ids: number[];
   vote_average: number;
   popularity: number;
-  media_type: 'tv';
+  media_type: "tv";
 }
 
 export type TMDBContent = TMDBMovie | TMDBSeries;
@@ -42,7 +44,8 @@ export interface TMDBGenre {
   name: string;
 }
 
-export interface TMDBMultiSearchResponse extends TMDBSearchResponse<TMDBContent> {}
+export interface TMDBMultiSearchResponse
+  extends TMDBSearchResponse<TMDBContent> {}
 
 class TMDBService {
   private api = axios.create({
@@ -58,77 +61,83 @@ class TMDBService {
   async initializeGenres() {
     try {
       // Load movie genres
-      const movieResponse = await this.api.get('/genre/movie/list');
+      const movieResponse = await this.api.get("/genre/movie/list");
       this.movieGenres = movieResponse.data.genres;
-      
+
       // Load TV show genres
-      const tvResponse = await this.api.get('/genre/tv/list');
+      const tvResponse = await this.api.get("/genre/tv/list");
       this.tvGenres = tvResponse.data.genres;
     } catch (error) {
-      console.error('Failed to load genres:', error);
+      console.error("Failed to load genres:", error);
       // Fallback genres
       this.movieGenres = [
-        { id: 28, name: 'Action' },
-        { id: 12, name: 'Adventure' },
-        { id: 16, name: 'Animation' },
-        { id: 35, name: 'Comedy' },
-        { id: 80, name: 'Crime' },
-        { id: 99, name: 'Documentary' },
-        { id: 18, name: 'Drama' },
-        { id: 10751, name: 'Family' },
-        { id: 14, name: 'Fantasy' },
-        { id: 36, name: 'History' },
-        { id: 27, name: 'Horror' },
-        { id: 10402, name: 'Music' },
-        { id: 9648, name: 'Mystery' },
-        { id: 10749, name: 'Romance' },
-        { id: 878, name: 'Science Fiction' },
-        { id: 10770, name: 'TV Movie' },
-        { id: 53, name: 'Thriller' },
-        { id: 10752, name: 'War' },
-        { id: 37, name: 'Western' }
+        { id: 28, name: "Action" },
+        { id: 12, name: "Adventure" },
+        { id: 16, name: "Animation" },
+        { id: 35, name: "Comedy" },
+        { id: 80, name: "Crime" },
+        { id: 99, name: "Documentary" },
+        { id: 18, name: "Drama" },
+        { id: 10751, name: "Family" },
+        { id: 14, name: "Fantasy" },
+        { id: 36, name: "History" },
+        { id: 27, name: "Horror" },
+        { id: 10402, name: "Music" },
+        { id: 9648, name: "Mystery" },
+        { id: 10749, name: "Romance" },
+        { id: 878, name: "Science Fiction" },
+        { id: 10770, name: "TV Movie" },
+        { id: 53, name: "Thriller" },
+        { id: 10752, name: "War" },
+        { id: 37, name: "Western" },
       ];
-      
+
       this.tvGenres = [
-        { id: 10759, name: 'Action & Adventure' },
-        { id: 16, name: 'Animation' },
-        { id: 35, name: 'Comedy' },
-        { id: 80, name: 'Crime' },
-        { id: 99, name: 'Documentary' },
-        { id: 18, name: 'Drama' },
-        { id: 10751, name: 'Family' },
-        { id: 10762, name: 'Kids' },
-        { id: 9648, name: 'Mystery' },
-        { id: 10763, name: 'News' },
-        { id: 10764, name: 'Reality' },
-        { id: 10765, name: 'Sci-Fi & Fantasy' },
-        { id: 10766, name: 'Soap' },
-        { id: 10767, name: 'Talk' },
-        { id: 10768, name: 'War & Politics' },
-        { id: 37, name: 'Western' }
+        { id: 10759, name: "Action & Adventure" },
+        { id: 16, name: "Animation" },
+        { id: 35, name: "Comedy" },
+        { id: 80, name: "Crime" },
+        { id: 99, name: "Documentary" },
+        { id: 18, name: "Drama" },
+        { id: 10751, name: "Family" },
+        { id: 10762, name: "Kids" },
+        { id: 9648, name: "Mystery" },
+        { id: 10763, name: "News" },
+        { id: 10764, name: "Reality" },
+        { id: 10765, name: "Sci-Fi & Fantasy" },
+        { id: 10766, name: "Soap" },
+        { id: 10767, name: "Talk" },
+        { id: 10768, name: "War & Politics" },
+        { id: 37, name: "Western" },
       ];
     }
   }
 
-  public getGenreName(id: number, mediaType: 'movie' | 'tv' = 'movie'): string {
-    const genreMap = mediaType === 'movie' ? this.movieGenres : this.tvGenres;
-    const genre = genreMap.find(g => g.id === id);
-    return genre ? genre.name : 'Unknown';
+  public getGenreName(id: number, mediaType: "movie" | "tv" = "movie"): string {
+    const genreMap = mediaType === "movie" ? this.movieGenres : this.tvGenres;
+    const genre = genreMap.find((g) => g.id === id);
+    return genre ? genre.name : "Unknown";
   }
 
-  async getRecommendations(mediaType: 'movie' | 'tv', id: number): Promise<TMDBSearchResponse> {
+  async getRecommendations(
+    mediaType: "movie" | "tv",
+    id: number
+  ): Promise<TMDBSearchResponse> {
     try {
-      const response = await this.api.get(`/${mediaType}/${id}/recommendations`, {
-        params: {
-          language: 'en-US',
-          page: 1,
-          sort_by: 'vote_average.desc',
-          vote_count_gte: 10,
-        },
-      });
-      
+      const response = await this.api.get(
+        `/${mediaType}/${id}/recommendations`,
+        {
+          params: {
+            language: "en-US",
+            page: 1,
+            sort_by: "vote_average.desc",
+            vote_count_gte: 10,
+          },
+        }
+      );
+
       // Debug log to inspect the response
-      console.log('TMDB Recommendations Response:', {
+      console.log("TMDB Recommendations Response:", {
         url: `/${mediaType}/${id}/recommendations`,
         params: response.config.params,
         results: response.data.results.map((r: any) => ({
@@ -136,13 +145,16 @@ class TMDBService {
           title: r.title || r.name,
           vote_average: r.vote_average,
           vote_count: r.vote_count,
-          release_date: r.release_date || r.first_air_date
-        }))
+          release_date: r.release_date || r.first_air_date,
+        })),
       });
-      
+
       return response.data;
     } catch (error) {
-      console.error(`Failed to get recommendations for ${mediaType} ${id}:`, error);
+      console.error(
+        `Failed to get recommendations for ${mediaType} ${id}:`,
+        error
+      );
       return { page: 1, results: [], total_pages: 0, total_results: 0 };
     }
   }
@@ -151,9 +163,14 @@ class TMDBService {
     return posterPath ? `${TMDB_IMAGE_BASE_URL}${posterPath}` : null;
   }
 
-  async searchMovies(query: string, page: number = 1, mediaType: 'movie' | 'tv' | 'multi' = 'movie'): Promise<TMDBSearchResponse<TMDBContent>> {
+  async searchMovies(
+    query: string,
+    page: number = 1,
+    mediaType: "movie" | "tv" | "multi" = "movie"
+  ): Promise<TMDBSearchResponse<TMDBContent>> {
     try {
-      const endpoint = mediaType === 'multi' ? '/search/multi' : `/search/${mediaType}`;
+      const endpoint =
+        mediaType === "multi" ? "/search/multi" : `/search/${mediaType}`;
       const response = await this.api.get(endpoint, {
         params: {
           query,
@@ -163,7 +180,7 @@ class TMDBService {
       });
       return response.data;
     } catch (error) {
-      console.error('Search failed:', error);
+      console.error("Search failed:", error);
       return {
         page: 1,
         results: [],
@@ -173,7 +190,10 @@ class TMDBService {
     }
   }
 
-  async getPopularMovies(page: number = 1, mediaType: 'movie' | 'tv' = 'movie'): Promise<TMDBSearchResponse<TMDBContent>> {
+  async getPopularMovies(
+    page: number = 1,
+    mediaType: "movie" | "tv" = "movie"
+  ): Promise<TMDBSearchResponse<TMDBContent>> {
     try {
       const response = await this.api.get(`/${mediaType}/popular`, {
         params: { page },
@@ -190,12 +210,17 @@ class TMDBService {
     }
   }
 
-  async getTrendingContent(timeWindow: 'day' | 'week' = 'week', mediaType: 'all' | 'movie' | 'tv' | 'person' = 'all'): Promise<TMDBSearchResponse<TMDBContent>> {
+  async getTrendingContent(
+    timeWindow: "day" | "week" = "week",
+    mediaType: "all" | "movie" | "tv" | "person" = "all"
+  ): Promise<TMDBSearchResponse<TMDBContent>> {
     try {
-      const response = await this.api.get(`/trending/${mediaType}/${timeWindow}`);
+      const response = await this.api.get(
+        `/trending/${mediaType}/${timeWindow}`
+      );
       return response.data;
     } catch (error) {
-      console.error('Failed to get trending content:', error);
+      console.error("Failed to get trending content:", error);
       return {
         page: 1,
         results: [],
@@ -210,13 +235,13 @@ class TMDBService {
       const response = await this.api.get(`/movie/${movieId}`);
       return response.data;
     } catch (error) {
-      console.error('Failed to get movie details:', error);
+      console.error("Failed to get movie details:", error);
       return null;
     }
   }
 
   async discoverContent(
-    mediaType: 'movie' | 'tv' = 'movie',
+    mediaType: "movie" | "tv" = "movie",
     params: {
       genre?: number;
       year?: number;
@@ -227,16 +252,16 @@ class TMDBService {
     try {
       const response = await this.api.get(`/discover/${mediaType}`, {
         params: {
-          sort_by: params.sortBy || 'popularity.desc',
+          sort_by: params.sortBy || "popularity.desc",
           page: params.page || 1,
           with_genres: params.genre,
-          [mediaType === 'movie' ? 'year' : 'first_air_date_year']: params.year,
+          [mediaType === "movie" ? "year" : "first_air_date_year"]: params.year,
           include_adult: false,
         },
       });
       return response.data;
     } catch (error) {
-      console.error('Discovery failed:', error);
+      console.error("Discovery failed:", error);
       return {
         page: 1,
         results: [],
@@ -244,6 +269,28 @@ class TMDBService {
         total_results: 0,
       };
     }
+  }
+  // Get details by id for a specific media type
+  async getDetailsById(
+    mediaType: "movie" | "tv",
+    id: number
+  ): Promise<TMDBMovie | TMDBSeries | null> {
+    try {
+      const response = await this.api.get(`/${mediaType}/${id}`);
+      return response.data as any;
+    } catch {
+      // 404 or other error – return null and let caller try the other type
+      return null;
+    }
+  }
+
+  // Try movie first, then TV – useful when we only have a TMDB id
+  async getAnyDetailsById(id: number): Promise<TMDBContent | null> {
+    const asMovie = await this.getDetailsById("movie", id);
+    if (asMovie) return asMovie as TMDBContent;
+    const asTv = await this.getDetailsById("tv", id);
+    if (asTv) return asTv as TMDBContent;
+    return null;
   }
 }
 

@@ -4,6 +4,7 @@ import { AIRecommendation } from "../types/aiRecommendation";
 import { RecommendationTabs } from "./RecommendationTabs";
 import { Recommendation, Movie } from "../types/movie";
 import { MovieCard } from "./MovieCard";
+import { tmdbService } from "../services/tmdbApi";
 
 // Function to parse AI recommendations from markdown text
 const parseAIRecommendations = (text: string): AIRecommendation[] => {
@@ -185,21 +186,65 @@ export const TasteProfile: React.FC<TasteProfileProps> = ({
     const parsedRecs = parseAIRecommendations(tasteProfile);
     setAiRecommendations(parsedRecs);
 
-    // Convert TMDB recommendations to Movie format
-    const movies = recommendations.map((rec) => ({
-      id: rec.tmdb_id,
-      title: rec.title,
-      year: rec.year,
-      genre: rec.genre || "Unknown",
-      tmdb_id: rec.tmdb_id,
-      poster_path: rec.poster,
-      overview: rec.reason,
-      vote_average: 0,
-      genre_ids: [],
-      media_type: "movie" as const,
-    }));
+    const loadRecs = async () => {
+      // Convert TMDB recommendations to Movie format with fresh TMDB details
+      const movies = await Promise.all(
+        recommendations.map(async (rec) => {
+          // Prefer exact-id lookup; if not found, fall back to a multi search by title
+          let details = await tmdbService.getAnyDetailsById(rec.tmdb_id);
+          if (!details) {
+            try {
+              const search = await tmdbService.searchMovies(
+                rec.title,
+                1,
+                "multi"
+              );
+              details = search.results?.[0] as any;
+            } catch {}
+          }
 
-    setTmdbMovies(movies);
+          const isTV = details && "name" in details;
+          const mediaType = isTV ? "tv" : "movie";
+          const title = details
+            ? isTV
+              ? (details as any).name
+              : (details as any).title
+            : rec.title;
+
+          return {
+            id: details?.id ?? rec.tmdb_id,
+            title,
+            year:
+              typeof rec.year === "number"
+                ? rec.year
+                : details?.release_date || (details as any)?.first_air_date
+                ? new Date(
+                    (details as any).release_date ||
+                      (details as any).first_air_date
+                  ).getFullYear()
+                : new Date().getFullYear(),
+            genre: rec.genre || "Unknown",
+            tmdb_id: rec.tmdb_id,
+            poster_path: details?.poster_path ?? null,
+            overview: rec.reason,
+            vote_average:
+              typeof (details as any)?.vote_average === "number"
+                ? (details as any).vote_average
+                : undefined,
+            popularity:
+              typeof (details as any)?.popularity === "number"
+                ? (details as any).popularity
+                : undefined,
+            genre_ids: (details as any)?.genre_ids || [],
+            media_type: mediaType as "movie" | "tv",
+          } as Movie;
+        })
+      );
+
+      setTmdbMovies(movies);
+    };
+
+    loadRecs();
   }, [tasteProfile, recommendations]);
 
   return (

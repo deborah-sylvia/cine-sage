@@ -15,13 +15,13 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   onToggle,
 }) => {
   // Debug log to inspect the movie object
-  console.log('MovieCard received movie:', {
+  console.log("MovieCard received movie:", {
     id: movie.id,
     title: movie.title,
     vote_average: movie.vote_average,
-    vote_count: 'vote_count' in movie ? movie.vote_count : 'N/A',
+    vote_count: "vote_count" in movie ? movie.vote_count : "N/A",
     has_poster: !!movie.poster_path,
-    media_type: movie.media_type
+    media_type: movie.media_type,
   });
 
   const posterUrl = tmdbService.getPosterUrl(movie.poster_path || null);
@@ -78,10 +78,15 @@ export const MovieCard: React.FC<MovieCardProps> = ({
               {genreName}
             </span>
           </div>
-          {movie.vote_average && movie.vote_average > 0 && (
+          {typeof movie.vote_average === "number" && movie.vote_average > 0 ? (
             <div className="flex items-center text-xs text-amber-400">
               <Star size={12} className="mr-1 fill-current" />
               <span>{movie.vote_average.toFixed(1)}</span>
+            </div>
+          ) : (
+            <div className="flex items-center text-xs text-gray-400">
+              <Star size={12} className="mr-1" />
+              <span>NR</span>
             </div>
           )}
         </div>

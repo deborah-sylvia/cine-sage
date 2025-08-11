@@ -85,9 +85,10 @@ export const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
   const [aiMovies, setAiMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  
+
   // Use the prop if provided, otherwise use analysis.recommendations if available
-  const tmdbRecommendations = propTmdbRecommendations || (analysis?.recommendations || []);
+  const tmdbRecommendations =
+    propTmdbRecommendations || analysis?.recommendations || [];
 
   // Store the current recommendations in a ref to avoid dependency issues
   const aiRecsRef = useRef<AIRecommendation[]>([]);
@@ -131,7 +132,10 @@ export const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
                   bestMatch.overview ||
                   "Recommended based on your preferences",
                 poster_path: bestMatch.poster_path,
-                vote_average: bestMatch.vote_average || 0,
+                vote_average:
+                  typeof bestMatch.vote_average === "number"
+                    ? bestMatch.vote_average
+                    : undefined,
                 genre_ids: bestMatch.genre_ids || [],
                 media_type: "movie",
                 popularity: bestMatch.popularity || 0,

@@ -176,7 +176,7 @@ function App() {
             />
 
             {/* Recommendations */}
-            <div>
+            {/* <div>
               <h2 className="text-3xl font-bold text-white mb-6 text-center">
                 Your 7 Movie Recommendations
               </h2>
@@ -189,7 +189,7 @@ function App() {
                   />
                 ))}
               </div>
-            </div>
+            </div> */}
 
             {/* JSON Export */}
             {/* <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
