@@ -239,7 +239,11 @@ export const TasteProfile: React.FC<TasteProfileProps> = ({
             )}
           </button>
 
-          <div className="transition-all duration-300 ease-in-out overflow-hidden">
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              showSelectedMovies ? "max-h-full" : "max-h-0"
+            }`}
+          >
             <div className="p-6 pt-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {selectedMovies.map((movie) => (
@@ -278,7 +282,9 @@ export const TasteProfile: React.FC<TasteProfileProps> = ({
         </button>
 
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden`}
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            isExpanded ? "max-h-full" : "max-h-0"
+          }`}
         >
           <div className="p-6 pt-0 ">
             <div className="prose prose-invert text-gray-300">
