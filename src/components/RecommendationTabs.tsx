@@ -6,7 +6,7 @@ import React, {
   ReactNode,
   useRef,
 } from "react";
-import { AnalysisResult, Movie } from "../types/movie";
+import { Movie } from "../types/movie";
 import { AIRecommendation } from "../types/aiRecommendation";
 import { MovieCard } from "./MovieCard";
 import { tmdbService } from "../services/tmdbApi";
@@ -81,14 +81,21 @@ export const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
   aiRecommendations = [],
   loading = false,
 }) => {
+  console.log('RecommendationTabs props:', {
+    tmdbRecommendations: propTmdbRecommendations,
+    aiRecommendations,
+    loading
+  });
   const [activeTab, setActiveTab] = useState<TabType>("tmdb");
   const [aiMovies, setAiMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-
-  // Use the prop if provided, otherwise use analysis.recommendations if available
-  const tmdbRecommendations =
-    propTmdbRecommendations || analysis?.recommendations || [];
+  
+  // Use the prop directly and ensure it's an array
+  const tmdbRecommendations = Array.isArray(propTmdbRecommendations) 
+    ? propTmdbRecommendations 
+    : [];
+    
+  console.log('TMDB Recommendations:', tmdbRecommendations);
 
   // Store the current recommendations in a ref to avoid dependency issues
   const aiRecsRef = useRef<AIRecommendation[]>([]);
@@ -158,15 +165,6 @@ export const RecommendationTabs: React.FC<RecommendationTabsProps> = ({
       setIsLoading(false);
     }
   }, [aiRecommendations]);
-
-  // Normalize string for comparison (removes special chars and converts to lowercase)
-  const normalizeString = (str: string): string => {
-    return str
-      .toLowerCase()
-      .replace(/[^\w\s]/g, "") // Remove special characters
-      .replace(/\s+/g, " ") // Replace multiple spaces with single space
-      .trim();
-  };
 
   // Render loading state
   if (loading || (activeTab === "ai" && isLoading)) {

@@ -4,13 +4,15 @@ import { Movie, AnalysisResult } from "./types/movie";
 import { MovieAnalyzer } from "./utils/movieAnalyzer";
 import { MovieSearch } from "./components/MovieSearch";
 import { TasteProfile } from "./components/TasteProfile";
-import { RecommendationCard } from "./components/RecommendationCard";
 import { FeedbackButton } from "./components/FeedbackButton";
+import { RecommendationTabs } from "./components/RecommendationTabs";
 
 function App() {
   const [selectedMovies, setSelectedMovies] = useState<Movie[]>([]);
+  const [hatedMovies, setHatedMovies] = useState<Movie[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showHateList, setShowHateList] = useState(false);
 
   const analyzer = new MovieAnalyzer();
 
@@ -20,6 +22,19 @@ function App() {
       if (isSelected) {
         return prev.filter((m) => m.id !== movie.id);
       } else {
+        return [...prev, movie];
+      }
+    });
+  };
+
+  const handleHateToggle = (movie: Movie) => {
+    setHatedMovies((prev) => {
+      const isHated = prev.some((m) => m.id === movie.id);
+      if (isHated) {
+        return prev.filter((m) => m.id !== movie.id);
+      } else {
+        // Remove from selected movies if it's there
+        setSelectedMovies((prev) => prev.filter((m) => m.id !== movie.id));
         return [...prev, movie];
       }
     });
@@ -69,7 +84,7 @@ function App() {
               Cine-Sage
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Your AI-powered film analyst and recommendation engine. Discover
+              Your AI-powered film analyzer and recommendation engine. Discover
               your unique cinematic taste and get personalized movie
               suggestions.
             </p>
@@ -120,7 +135,11 @@ function App() {
 
               <MovieSearch
                 selectedMovies={selectedMovies}
+                hatedMovies={hatedMovies}
                 onMovieToggle={handleMovieToggle}
+                onHateToggle={handleHateToggle}
+                showHateList={showHateList}
+                onToggleHateList={() => setShowHateList(!showHateList)}
               />
             </div>
 
@@ -168,26 +187,44 @@ function App() {
               </button>
             </div>
 
-            {/* Taste Profile */}
-            <TasteProfile
-              tasteProfile={analysis.taste_profile}
-              recommendations={analysis.recommendations}
-              selectedMovies={selectedMovies}
-            />
+            {analysis && (
+              <TasteProfile
+                tasteProfile={analysis.taste_profile}
+                recommendations={analysis.recommendations.filter(
+                  (rec) => !hatedMovies.some((m) => m.tmdb_id === rec.tmdb_id)
+                )}
+                selectedMovies={selectedMovies}
+                hatedMovies={hatedMovies}
+                onHateToggle={handleHateToggle}
+              />
+            )}
 
             {/* Recommendations */}
-            {/* <div>
+            {/* <div className="mt-8">
               <h2 className="text-3xl font-bold text-white mb-6 text-center">
-                Your 7 Movie Recommendations
+                Your Movie Recommendations
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {analysis.recommendations.map((recommendation, index) => (
-                  <RecommendationCard
-                    key={recommendation.tmdb_id}
-                    recommendation={recommendation}
-                    index={index}
-                  />
-                ))}
+              <div className="mt-4">
+                <RecommendationTabs
+                  tmdbRecommendations={analysis.recommendations
+                    .filter((rec) => !hatedMovies.some((m) => m.tmdb_id === rec.tmdb_id))
+                    .map((rec) => ({
+                      ...rec,
+                      id: rec.id || rec.tmdb_id,
+                      title: rec.title || 'Unknown Title',
+                      year: rec.year || new Date().getFullYear(),
+                      genre: rec.genre || 'Unknown',
+                      tmdb_id: rec.tmdb_id,
+                      poster_path: rec.poster_path || rec.poster || null,
+                      overview: rec.overview || rec.reason || 'No description available',
+                      vote_average: rec.vote_average || 0,
+                      popularity: rec.popularity || 0,
+                      genre_ids: rec.genre_ids || [],
+                      media_type: rec.media_type || 'movie',
+                    }))}
+                  aiRecommendations={[]} // Pass empty array for now as we don't have AI recommendations yet
+                  loading={isAnalyzing}
+                />
               </div>
             </div> */}
 

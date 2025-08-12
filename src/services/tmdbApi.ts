@@ -6,6 +6,29 @@ const TMDB_BASE_URL =
 const TMDB_IMAGE_BASE_URL =
   import.meta.env.VITE_TMDB_IMAGE_BASE_URL || "https://image.tmdb.org/t/p/w500";
 
+// Simple cache for TMDB details (memory + localStorage)
+const DETAILS_CACHE = new Map<number, any>();
+
+function cacheGet(id: number) {
+  if (DETAILS_CACHE.has(id)) return DETAILS_CACHE.get(id);
+  try {
+    const raw = localStorage.getItem(`tmdb:details:${id}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      DETAILS_CACHE.set(id, parsed);
+      return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+function cacheSet(id: number, value: any) {
+  DETAILS_CACHE.set(id, value);
+  try {
+    localStorage.setItem(`tmdb:details:${id}`, JSON.stringify(value));
+  } catch {}
+}
+
 export interface TMDBMovie {
   id: number;
   title: string;
@@ -271,25 +294,31 @@ class TMDBService {
     }
   }
   // Get details by id for a specific media type
-  async getDetailsById(
-    mediaType: "movie" | "tv",
-    id: number
-  ): Promise<TMDBMovie | TMDBSeries | null> {
+  async getDetailsById(mediaType: "movie" | "tv", id: number) {
+    const hit = cacheGet(id);
+    if (hit && hit.media_type === mediaType) return hit;
+
     try {
       const response = await this.api.get(`/${mediaType}/${id}`);
-      return response.data as any;
+      const data = { ...response.data, media_type: mediaType };
+      cacheSet(id, data);
+      return data as any;
     } catch {
-      // 404 or other error – return null and let caller try the other type
       return null;
     }
   }
 
   // Try movie first, then TV – useful when we only have a TMDB id
-  async getAnyDetailsById(id: number): Promise<TMDBContent | null> {
+  async getAnyDetailsById(id: number) {
+    const hit = cacheGet(id);
+    if (hit) return hit as any;
+
     const asMovie = await this.getDetailsById("movie", id);
-    if (asMovie) return asMovie as TMDBContent;
+    if (asMovie) return asMovie as any;
+
     const asTv = await this.getDetailsById("tv", id);
-    if (asTv) return asTv as TMDBContent;
+    if (asTv) return asTv as any;
+
     return null;
   }
 }

@@ -1,24 +1,30 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, X, Loader2, TrendingUp, Star } from "lucide-react";
+import { Search, X, Loader2, ThumbsDown } from "lucide-react";
 import { Movie } from "../types/movie";
 import { tmdbService, TMDBContent } from "../services/tmdbApi";
 import { MovieCard } from "./MovieCard";
 
 interface MovieSearchProps {
   selectedMovies: Movie[];
+  hatedMovies: Movie[];
   onMovieToggle: (movie: Movie) => void;
+  onHateToggle: (movie: Movie) => void;
+  showHateList: boolean;
+  onToggleHateList: () => void;
 }
-
-type ViewType = "popular" | "trending" | "search";
 
 export const MovieSearch: React.FC<MovieSearchProps> = ({
   selectedMovies,
+  hatedMovies,
   onMovieToggle,
+  onHateToggle,
+  showHateList,
+  onToggleHateList,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [content, setContent] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentView, setCurrentView] = useState<ViewType>("popular");
+
   const [hasSearched, setHasSearched] = useState(false);
 
   // Convert TMDB content to our Movie interface
@@ -52,63 +58,45 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({
     };
   };
 
-  // Initialize genres and load popular content
+  // Initialize genres and load initial content
   useEffect(() => {
     const initialize = async () => {
       setLoading(true);
       await tmdbService.initializeGenres();
-      await loadPopularContent();
+      // Load popular content by default - both movies and TV shows
+      const [moviesResponse, tvResponse] = await Promise.all([
+        tmdbService.getPopularMovies(1, "movie"),
+        tmdbService.getPopularMovies(1, "tv")
+      ]);
+      
+      const allContent = [
+        ...moviesResponse.results.map(convertTMDBContent),
+        ...tvResponse.results.map(convertTMDBContent)
+      ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      
+      setContent(allContent);
       setLoading(false);
     };
     initialize();
   }, []);
 
-  const loadPopularContent = async () => {
-    try {
-      // Load both movies and TV shows
-      const [moviesResponse, tvResponse] = await Promise.all([
-        tmdbService.getPopularMovies(1, "movie"),
-        tmdbService.getPopularMovies(1, "tv"),
-      ]);
-
-      // Combine and sort by popularity
-      const combined = [
-        ...moviesResponse.results.map(convertTMDBContent),
-        ...tvResponse.results.map(convertTMDBContent),
-      ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-
-      setContent(combined);
-      setCurrentView("popular");
-    } catch (error) {
-      console.error("Failed to load popular content:", error);
-    }
-  };
-
-  const loadTrendingContent = async () => {
-    try {
-      // Get both trending movies and TV shows
-      const response = await tmdbService.getTrendingContent("week", "all");
-
-      const convertedContent = response.results
-        .filter(
-          (item: any) =>
-            (item as any).media_type === "movie" ||
-            (item as any).media_type === "tv"
-        )
-        .map(convertTMDBContent)
-        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-
-      setContent(convertedContent);
-      setCurrentView("trending");
-    } catch (error) {
-      console.error("Failed to load trending content:", error);
-    }
-  };
-
   const searchContent = async (query: string) => {
     if (!query.trim()) {
-      await loadPopularContent();
+      // If search is empty, show popular content - both movies and TV shows
+      setLoading(true);
+      const [moviesResponse, tvResponse] = await Promise.all([
+        tmdbService.getPopularMovies(1, "movie"),
+        tmdbService.getPopularMovies(1, "tv")
+      ]);
+      
+      const allContent = [
+        ...moviesResponse.results.map(convertTMDBContent),
+        ...tvResponse.results.map(convertTMDBContent)
+      ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      
+      setContent(allContent);
       setHasSearched(false);
+      setLoading(false);
       return;
     }
 
@@ -127,14 +115,13 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({
         .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
 
       setContent(convertedContent);
-      setCurrentView("search");
     } catch (error) {
       console.error("Search failed:", error);
     }
     setLoading(false);
   };
 
-  // Debounced search
+  // Search when searchTerm changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       searchContent(searchTerm);
@@ -154,18 +141,24 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({
 
   const clearSearch = () => {
     setSearchTerm("");
-    loadPopularContent();
+    setContent([]);
     setHasSearched(false);
   };
 
   const isSelected = (content: Movie) =>
     selectedMovies.some((m) => m.id === content.id);
+    
+  const isHated = (content: Movie) =>
+    hatedMovies.some((m) => m.id === content.id);
 
   const displayedContent = useMemo(() => {
+    if (showHateList) {
+      return hatedMovies;
+    }
     return content.filter((item) =>
       item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [content, searchTerm]);
+  }, [content, searchTerm, showHateList, hatedMovies]);
 
   return (
     <div className="space-y-6">
@@ -194,33 +187,32 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({
         </form>
       </div>
 
-      {/* View Toggle Buttons */}
-      {!hasSearched && (
-        <div className="flex gap-2">
-          <button
-            onClick={loadPopularContent}
-            className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              currentView === "popular"
-                ? "bg-purple-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
-          >
-            <Star size={16} className="mr-2" />
-            Popular Now
-          </button>
-          <button
-            onClick={loadTrendingContent}
-            className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              currentView === "trending"
-                ? "bg-purple-600 text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-            }`}
-          >
-            <TrendingUp size={16} className="mr-2" />
-            Trending This Week
-          </button>
-        </div>
-      )}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-white">
+          {showHateList 
+            ? 'Hated Movies & Shows' 
+            : searchTerm 
+              ? `Search Results for "${searchTerm}"` 
+              : 'Popular Movies & Shows'}
+        </h2>
+        <button
+          type="button"
+          onClick={onToggleHateList}
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+            showHateList
+              ? "bg-red-600 text-white"
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+          }`}
+        >
+          <ThumbsDown className="h-5 w-5" />
+          {hatedMovies.length > 0 && (
+            <span className="bg-white text-red-600 rounded-full text-xs w-5 h-5 flex items-center justify-center">
+              {hatedMovies.length}
+            </span>
+          )}
+          <span>Hate List</span>
+        </button>
+      </div>
 
       {/* Selected Movies */}
       {selectedMovies.length > 0 && (
@@ -245,18 +237,6 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({
 
       {/* Movies Grid */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">
-            {hasSearched && searchTerm
-              ? `Search Results for "${searchTerm}"`
-              : currentView === "trending"
-              ? `Trending This Week`
-              : `Popular Now`}
-          </h3>
-          <span className="text-sm text-gray-400">
-            {content.length} {content.length !== 1 ? "items" : "item"}
-          </span>
-        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -273,7 +253,7 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({
                 onClick={clearSearch}
                 className="text-purple-400 hover:text-purple-300 underline"
               >
-                View popular content instead View popular content instead
+                View popular content instead
               </button>
             )}
           </div>
@@ -281,10 +261,12 @@ export const MovieSearch: React.FC<MovieSearchProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayedContent.map((item) => (
               <MovieCard
-                key={`${item.media_type || "movie"}-${item.id}`}
+                key={item.id}
                 movie={item}
                 isSelected={isSelected(item)}
+                isHated={isHated(item)}
                 onToggle={onMovieToggle}
+                onHateToggle={onHateToggle}
               />
             ))}
           </div>

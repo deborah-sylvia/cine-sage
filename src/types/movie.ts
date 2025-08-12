@@ -24,13 +24,20 @@ export interface TasteProfile {
 }
 
 export interface Recommendation {
+  id: number;
   title: string;
   year: number;
   tmdb_id: number;
   reason: string;
   category: 'Strong Match' | 'Hidden Gem' | 'Surprising Pick' | 'Recent Release';
   poster?: string;
+  poster_path?: string | null;
   genre?: string;
+  overview?: string;
+  vote_average?: number;
+  popularity?: number;
+  genre_ids?: number[];
+  media_type?: 'movie' | 'tv';
 }
 
 export interface AnalysisResult {
